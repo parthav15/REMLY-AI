@@ -7,9 +7,9 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv("SECRET_KEY", "insecure-dev-key-change-me")
-DEBUG = os.getenv("DEBUG", "True").lower() in ("true", "1", "yes")
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+SECRET_KEY = os.environ["SECRET_KEY"]
+DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", "yes")
+ALLOWED_HOSTS = ["*"] if DEBUG else os.getenv("ALLOWED_HOSTS", "").split(",")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -18,13 +18,13 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # Third-party
     "rest_framework",
+    "rest_framework.authtoken",
     "corsheaders",
-    # Local
     "users",
     "reminders",
     "webhooks",
+    "payments",
 ]
 
 MIDDLEWARE = [
@@ -58,13 +58,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-# Database — PostgreSQL
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("DB_NAME", "remly"),
-        "USER": os.getenv("DB_USER", "postgres"),
-        "PASSWORD": os.getenv("DB_PASSWORD", "postgres"),
+        "NAME": os.environ["DB_NAME"],
+        "USER": os.environ["DB_USER"],
+        "PASSWORD": os.getenv("DB_PASSWORD", ""),
         "HOST": os.getenv("DB_HOST", "localhost"),
         "PORT": os.getenv("DB_PORT", "5432"),
     }
@@ -89,7 +88,6 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# DRF
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.TokenAuthentication",
@@ -99,12 +97,26 @@ REST_FRAMEWORK = {
     ],
 }
 
-# CORS — allow the Expo dev client during development
-CORS_ALLOWED_ORIGINS = os.getenv(
-    "CORS_ALLOWED_ORIGINS", "http://localhost:8081,http://localhost:19006"
-).split(",")
+CORS_ALLOW_ALL_ORIGINS = DEBUG
 
-# Retell AI
-RETELL_API_KEY = os.getenv("RETELL_API_KEY", "")
-RETELL_AGENT_ID = os.getenv("RETELL_AGENT_ID", "")
-RETELL_FROM_NUMBER = os.getenv("RETELL_FROM_NUMBER", "")
+RETELL_API_KEY = os.environ["RETELL_API_KEY"]
+RETELL_AGENT_ID = os.environ["RETELL_AGENT_ID"]
+RETELL_FROM_NUMBER = os.environ["RETELL_FROM_NUMBER"]
+
+DEFAULT_USER_CREDITS = int(os.getenv("DEFAULT_USER_CREDITS", "50"))
+DEFAULT_TIMEZONE = os.getenv("DEFAULT_TIMEZONE", "UTC")
+MIN_PASSWORD_LENGTH = int(os.getenv("MIN_PASSWORD_LENGTH", "8"))
+REMINDER_CREDIT_COST = int(os.getenv("REMINDER_CREDIT_COST", "1"))
+DEFAULT_SNOOZE_MINUTES = int(os.getenv("DEFAULT_SNOOZE_MINUTES", "10"))
+RECURRENCE_INTERVAL_DAYS = int(os.getenv("RECURRENCE_INTERVAL_DAYS", "1"))
+ADMIN_MESSAGE_PREVIEW_LENGTH = 60
+MESSAGE_PREVIEW_LENGTH = 40
+
+RAZORPAY_KEY_ID = os.environ["RAZORPAY_KEY_ID"]
+RAZORPAY_KEY_SECRET = os.environ["RAZORPAY_KEY_SECRET"]
+
+CREDIT_PLANS = [
+    {"id": "starter", "name": "Starter", "credits": 50, "amount_paise": 79900, "display_price": "₹799"},
+    {"id": "pro", "name": "Pro", "credits": 125, "amount_paise": 159900, "display_price": "₹1,599"},
+    {"id": "topup", "name": "Pay-As-You-Go", "credits": 50, "amount_paise": 50000, "display_price": "₹500"},
+]

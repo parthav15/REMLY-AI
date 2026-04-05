@@ -3,8 +3,15 @@ from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import CustomUser
-from .serializers import LoginSerializer, RegisterSerializer, UserSerializer
+from .models import Country, CustomUser
+from .serializers import CountrySerializer, LoginSerializer, RegisterSerializer, UserSerializer
+
+
+class CountryListView(generics.ListAPIView):
+    queryset = Country.objects.filter(is_active=True).prefetch_related("timezones")
+    serializer_class = CountrySerializer
+    permission_classes = [permissions.AllowAny]
+    pagination_class = None
 
 
 class RegisterView(generics.CreateAPIView):

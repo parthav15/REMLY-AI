@@ -1,7 +1,6 @@
 import * as Contacts from "expo-contacts";
-import { Alert, Platform } from "react-native";
-
-const REMLY_PHONE = "+1234567890"; // Replace with your Retell number
+import { Alert } from "react-native";
+import { CONTACT } from "../constants";
 
 export async function saveRemlyContact(): Promise<boolean> {
   const { status } = await Contacts.requestPermissionsAsync();
@@ -13,13 +12,12 @@ export async function saveRemlyContact(): Promise<boolean> {
     return false;
   }
 
-  // Check if already saved
   const { data } = await Contacts.getContactsAsync({
     fields: [Contacts.Fields.PhoneNumbers],
   });
 
   const alreadySaved = data.some((c) =>
-    c.phoneNumbers?.some((p) => p.number?.replace(/\D/g, "").endsWith(REMLY_PHONE.replace(/\D/g, "")))
+    c.phoneNumbers?.some((p) => p.number?.replace(/\D/g, "").endsWith(CONTACT.PHONE.replace(/\D/g, "")))
   );
 
   if (alreadySaved) {
@@ -28,22 +26,18 @@ export async function saveRemlyContact(): Promise<boolean> {
 
   const contact: Contacts.Contact = {
     contactType: Contacts.ContactTypes.Person,
-    name: "Remly AI Assistant",
-    firstName: "Remly AI",
-    lastName: "Assistant",
+    name: CONTACT.DISPLAY_NAME,
+    firstName: CONTACT.FIRST_NAME,
+    lastName: CONTACT.LAST_NAME,
     phoneNumbers: [
       {
-        label: "mobile",
-        number: REMLY_PHONE,
+        label: CONTACT.PHONE_LABEL,
+        number: CONTACT.PHONE,
       },
     ],
   };
 
-  if (Platform.OS === "ios") {
-    await Contacts.addContactAsync(contact);
-  } else {
-    await Contacts.addContactAsync(contact);
-  }
+  await Contacts.addContactAsync(contact);
 
   return true;
 }

@@ -1,25 +1,29 @@
+import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
-  StyleSheet,
   Switch,
   Text,
-  TextInput,
   View,
 } from "react-native";
+import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import * as api from "../../src/api/client";
+import AnimatedPressable from "../../src/components/AnimatedPressable";
+import GradientButton from "../../src/components/GradientButton";
+import PremiumInput from "../../src/components/PremiumInput";
+import { COLORS, CONFIG } from "../../src/constants";
 import { useAuth } from "../../src/context/AuthContext";
 
 export default function CreateScreen() {
   const { user, refreshUser } = useAuth();
   const [message, setMessage] = useState("");
-  const [date, setDate] = useState(new Date(Date.now() + 60 * 60 * 1000)); // 1 hour from now
+  const [date, setDate] = useState(new Date(Date.now() + CONFIG.DEFAULT_REMINDER_OFFSET_MS));
   const [showDate, setShowDate] = useState(false);
   const [showTime, setShowTime] = useState(false);
   const [recurring, setRecurring] = useState(false);
@@ -34,7 +38,7 @@ export default function CreateScreen() {
       Alert.alert("Error", "Scheduled time must be in the future.");
       return;
     }
-    if ((user?.credits ?? 0) < 1) {
+    if ((user?.credits ?? 0) < CONFIG.REMINDER_CREDIT_COST) {
       Alert.alert("No Credits", "You need at least 1 credit to create a reminder.");
       return;
     }
@@ -47,7 +51,7 @@ export default function CreateScreen() {
         { text: "OK", onPress: () => router.navigate("/(tabs)") },
       ]);
       setMessage("");
-      setDate(new Date(Date.now() + 60 * 60 * 1000));
+      setDate(new Date(Date.now() + CONFIG.DEFAULT_REMINDER_OFFSET_MS));
       setRecurring(false);
     } catch (e: any) {
       Alert.alert("Error", e.message);
@@ -64,30 +68,67 @@ export default function CreateScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      className="flex-1 bg-gray-50"
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.label}>What should we remind you?</Text>
-        <TextInput
-          style={styles.messageInput}
-          placeholder="e.g. Take your meds, Join the Zoom call, Stop gaming..."
-          placeholderTextColor="#a0a0a0"
-          value={message}
-          onChangeText={setMessage}
-          multiline
-          maxLength={500}
-        />
+      <ScrollView className="flex-1" contentContainerStyle={{ padding: 20, paddingBottom: 60 }}>
+        <Animated.View entering={FadeIn.duration(500)} className="mb-6">
+          <LinearGradient
+            colors={[COLORS.brandLight, "#f0edff"]}
+            className="rounded-2xl p-4 flex-row items-center gap-3"
+          >
+            <Ionicons name="sparkles" size={20} color={COLORS.brand} />
+            <Text className="text-sm text-brand font-semibold flex-1">
+              Our AI assistant will call and read your reminder aloud.
+            </Text>
+          </LinearGradient>
+        </Animated.View>
 
-        <Text style={styles.label}>When should we call?</Text>
-        <View style={styles.dateRow}>
-          <Pressable style={styles.datePicker} onPress={() => setShowDate(true)}>
-            <Text style={styles.dateText}>{formatDate(date)}</Text>
-          </Pressable>
-          <Pressable style={styles.datePicker} onPress={() => setShowTime(true)}>
-            <Text style={styles.dateText}>{formatTime(date)}</Text>
-          </Pressable>
-        </View>
+        <Animated.View entering={FadeInDown.delay(100).duration(500).springify()}>
+          <Text className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">
+            Reminder Message
+          </Text>
+          <PremiumInput
+            placeholder="e.g. Take your meds, Join the Zoom call..."
+            value={message}
+            onChangeText={setMessage}
+            multiline
+            maxLength={CONFIG.MAX_MESSAGE_LENGTH}
+            style={{ minHeight: 110, textAlignVertical: "top" }}
+          />
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(200).duration(500).springify()} className="mt-5">
+          <Text className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">
+            Schedule
+          </Text>
+          <View className="flex-row gap-3">
+            <AnimatedPressable
+              className="flex-1"
+              onPress={() => setShowDate(true)}
+            >
+              <View
+                className="bg-white rounded-2xl px-4 py-4 flex-row items-center gap-3 border border-gray-100"
+                style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+              >
+                <Ionicons name="calendar-outline" size={20} color={COLORS.brand} />
+                <Text className="text-base font-semibold text-gray-800">{formatDate(date)}</Text>
+              </View>
+            </AnimatedPressable>
+            <AnimatedPressable
+              className="flex-1"
+              onPress={() => setShowTime(true)}
+            >
+              <View
+                className="bg-white rounded-2xl px-4 py-4 flex-row items-center gap-3 border border-gray-100"
+                style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+              >
+                <Ionicons name="time-outline" size={20} color={COLORS.brand} />
+                <Text className="text-base font-semibold text-gray-800">{formatTime(date)}</Text>
+              </View>
+            </AnimatedPressable>
+          </View>
+        </Animated.View>
 
         {showDate && (
           <DateTimePicker
@@ -119,83 +160,46 @@ export default function CreateScreen() {
           />
         )}
 
-        <View style={styles.switchRow}>
-          <View>
-            <Text style={styles.switchLabel}>Repeat daily</Text>
-            <Text style={styles.switchHint}>We'll call you at the same time every day</Text>
-          </View>
-          <Switch
-            value={recurring}
-            onValueChange={setRecurring}
-            trackColor={{ true: "#4f46e5", false: "#e5e7eb" }}
-            thumbColor="#fff"
+        <Animated.View entering={FadeInDown.delay(300).duration(500).springify()} className="mt-5">
+          <AnimatedPressable onPress={() => setRecurring(!recurring)}>
+            <View
+              className="bg-white rounded-2xl px-5 py-4 flex-row justify-between items-center border border-gray-100"
+              style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+            >
+              <View className="flex-row items-center gap-3 flex-1">
+                <View className={`rounded-xl p-2 ${recurring ? "bg-indigo-50" : "bg-gray-100"}`}>
+                  <Ionicons name="repeat-outline" size={20} color={recurring ? COLORS.brand : COLORS.textTertiary} />
+                </View>
+                <View>
+                  <Text className="text-base font-semibold text-gray-800">Repeat daily</Text>
+                  <Text className="text-xs text-gray-400 mt-0.5">Same time every day</Text>
+                </View>
+              </View>
+              <Switch
+                value={recurring}
+                onValueChange={setRecurring}
+                trackColor={{ true: COLORS.brand, false: COLORS.switchTrackOff }}
+                thumbColor={COLORS.white}
+              />
+            </View>
+          </AnimatedPressable>
+        </Animated.View>
+
+        <View className="mt-8">
+          <GradientButton
+            label={`Set Reminder (${CONFIG.REMINDER_CREDIT_COST} credit)`}
+            loadingLabel="Setting reminder..."
+            loading={loading}
+            onPress={handleCreate}
           />
         </View>
 
-        <Pressable
-          style={[styles.button, loading && styles.buttonDisabled]}
-          onPress={handleCreate}
-          disabled={loading}
-        >
-          <Text style={styles.buttonText}>
-            {loading ? "Setting reminder..." : "Set Reminder (1 credit)"}
+        <Animated.View entering={FadeIn.delay(500).duration(400)} className="mt-4 items-center">
+          <Text className="text-sm text-gray-300">
+            {user?.credits ?? 0} credits remaining
           </Text>
-        </Pressable>
-
-        <Text style={styles.creditsHint}>
-          You have {user?.credits ?? 0} credits remaining.
-        </Text>
+        </Animated.View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  scroll: { padding: 24, paddingBottom: 60 },
-  label: { fontSize: 14, fontWeight: "700", color: "#374151", marginBottom: 8, marginTop: 24 },
-  messageInput: {
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    minHeight: 100,
-    textAlignVertical: "top",
-    backgroundColor: "#f9fafb",
-    lineHeight: 22,
-  },
-  dateRow: { flexDirection: "row", gap: 12 },
-  datePicker: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    backgroundColor: "#f9fafb",
-  },
-  dateText: { fontSize: 16, fontWeight: "600", color: "#1f2937" },
-  switchRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 28,
-    paddingVertical: 16,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: "#e5e7eb",
-  },
-  switchLabel: { fontSize: 16, fontWeight: "600", color: "#1f2937" },
-  switchHint: { fontSize: 13, color: "#6b7280", marginTop: 2 },
-  button: {
-    backgroundColor: "#4f46e5",
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: "center",
-    marginTop: 32,
-  },
-  buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: "#fff", fontSize: 16, fontWeight: "700" },
-  creditsHint: { fontSize: 13, color: "#9ca3af", textAlign: "center", marginTop: 12 },
-});

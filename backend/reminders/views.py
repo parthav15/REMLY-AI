@@ -1,4 +1,5 @@
-from rest_framework import generics, status
+from django.conf import settings
+from rest_framework import generics, serializers
 from rest_framework.response import Response
 
 from .models import Reminder
@@ -13,9 +14,9 @@ class ReminderListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         user = self.request.user
-        if user.credits < 1:
+        if user.credits < settings.REMINDER_CREDIT_COST:
             raise serializers.ValidationError({"detail": "Insufficient credits."})
-        user.credits -= 1
+        user.credits -= settings.REMINDER_CREDIT_COST
         user.save(update_fields=["credits"])
         serializer.save(user=user)
 
@@ -28,6 +29,6 @@ class ReminderDetailView(generics.RetrieveDestroyAPIView):
 
     def perform_destroy(self, instance):
         if instance.status == Reminder.Status.PENDING:
-            self.request.user.credits += 1
+            self.request.user.credits += settings.REMINDER_CREDIT_COST
             self.request.user.save(update_fields=["credits"])
         instance.delete()

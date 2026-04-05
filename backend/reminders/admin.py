@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import admin
 
 from .models import Reminder
@@ -11,5 +12,5 @@ class ReminderAdmin(admin.ModelAdmin):
     readonly_fields = ["retell_call_id", "created_at", "updated_at"]
 
     def message_preview(self, obj):
-        return obj.message[:60]
+        return obj.message[:settings.ADMIN_MESSAGE_PREVIEW_LENGTH]
     message_preview.short_description = "Message"

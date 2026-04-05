@@ -1,6 +1,6 @@
 import uuid
 
-from django.conf import settings
+from django.conf import settings as django_settings
 from django.db import models
 
 
@@ -13,12 +13,12 @@ class Reminder(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+        django_settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="reminders",
     )
-    message = models.TextField(help_text="What the AI will read out loud")
-    scheduled_at = models.DateTimeField(help_text="Exact UTC time to place the call")
+    message = models.TextField()
+    scheduled_at = models.DateTimeField()
     status = models.CharField(
         max_length=20,
         choices=Status.choices,
@@ -37,4 +37,4 @@ class Reminder(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.user.phone_number} — {self.message[:40]} @ {self.scheduled_at}"
+        return f"{self.user.phone_number} — {self.message[:django_settings.MESSAGE_PREVIEW_LENGTH]} @ {self.scheduled_at}"

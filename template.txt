@@ -1,0 +1,160 @@
+LLM_TEMPLATE = {
+    "model": "gpt-4.1",
+    "model_temperature": 0.6,
+    "model_high_priority": True,
+    "tool_call_strict_mode": False,
+    "general_tools": [
+        {
+            "name": "transfer_call",
+            "description": (
+                'Trigger this tool to connect the call to a human agent when the lead '
+                'either qualifies by answering all four qualification questions or when '
+                'ready_to_transfer: {{ready_to_transfer}} is set to true (boolean or string). '
+                'But keep in mind, you need to ask for confirmation from the lead even when '
+                'the ready_to_transfer is "true".'
+            ),
+            "custom_sip_headers": {},
+            "transfer_destination": {
+                "type": "predefined",
+                "number": "{{transfer_number}}"
+            },
+            "transfer_option": {
+                "cold_transfer_mode": "sip_refer",
+                "enable_bridge_audio_cue": True,
+                "type": "cold_transfer",
+                "show_transferee_as_caller": True
+            },
+            "type": "transfer_call"
+        },
+        {
+            "name": "end_call",
+            "type": "end_call",
+            "description": (
+                "End the call when user has to leave (like says bye) or you are "
+                "instructed to do so. Also, When the call goes to IVR or voicemail "
+                "or virtual assistant speaks.."
+            )
+        }
+    ],
+    "start_speaker": "user",
+    "begin_message": "Hey, is this {{customer_first_name}}?",
+    "begin_after_user_silence_ms": 3000,
+    "knowledge_base_ids": [
+        "knowledge_base_375fce892bddf913",
+        "knowledge_base_375fce892bddf913"
+    ],
+    "kb_config": {
+        "top_k": 8,
+        "filter_score": 0.7
+    },
+}
+
+# Agent creation payload template (all settings from the existing template agent)
+AGENT_TEMPLATE = {
+    "channel": "voice",
+    "webhook_url": WEBHOOK_URL,
+    "webhook_timeout_ms": 10000,
+    "language": "multi",
+    "data_storage_setting": "everything",
+    "opt_in_signed_url": False,
+    "end_call_after_silence_ms": 30000,
+    "post_call_analysis_data": [
+        {
+            "type": "string",
+            "name": "call_outcome",
+            "description": (
+                "Classify the outcome of the call by returning only one of the following "
+                "labels: qualified if the user qualifies, disqualified if the user does not "
+                "qualify, interested if the user is interested, transferred if the call is "
+                "transferred to the call center, scheduled_callback if the user is interested "
+                "but scheduled a call back, or not_answered if the user did not answer or if "
+                "the user asks to text me i am busy, then call outcome will be not_answered."
+            )
+        },
+        {
+            "type": "boolean",
+            "name": "reached_voicemail",
+            "description": "only return true if reached voicemail, otherwise false"
+        },
+        {
+            "type": "string",
+            "name": "call_summary",
+            "description": "return the detailed summary of the call"
+        },
+        {
+            "type": "boolean",
+            "name": "qualified",
+            "description": "only return if the user is qualified, otherwise false"
+        },
+        {
+            "name": "qual_q1",
+            "description": "Return the answer of the user to the first qualifying question",
+            "type": "string",
+            "examples": []
+        },
+        {
+            "type": "string",
+            "name": "qual_q2",
+            "description": "Return the answer of the user to the second qualifying question"
+        },
+        {
+            "type": "string",
+            "name": "qual_q3",
+            "description": "Return the answer of the user to the third qualifying question"
+        },
+        {
+            "type": "string",
+            "name": "qual_q4",
+            "description": "Return the answer of the user to the fourth qualifying question"
+        },
+        {
+            "name": "next_recall_date",
+            "description": (
+                "{{current_time}}\nIf the user requested a recall time, return the "
+                "confirmed recall datetime as an ISO 8601 string with timezone offset "
+                "(example: 2025-08-19T18:00:00-07:00). Always include the offset "
+                "(e.g. -07:00 for PDT). If the user gave a relative time (e.g., \"in 20 "
+                "minutes\"), compute it relative to the call end time and return the exact "
+                "resulting datetime. If the user requested a vague time (e.g., \"tomorrow "
+                "evening\"), ask a clarifying question and only return a datetime after the "
+                "user picks and confirms a specific time. If you cannot determine a valid "
+                "datetime, return null. never return the date in the past, even if you are "
+                "not clear, return a future date."
+            ),
+            "type": "string",
+            "examples": ["2025-08-19T18:00:00-07:00"]
+        }
+    ],
+    "post_call_analysis_model": "gpt-5-mini",
+    "pii_config": {"mode": "post_call", "categories": []},
+    "analysis_successful_prompt": (
+        "Evaluate whether the agent seems to have a successful call with the user, "
+        "where the agent finishes the task, and the call was complete without being cutoff."
+    ),
+    "analysis_summary_prompt": (
+        "Write a 1-3 sentence summary of the call based on the call transcript. "
+        "Should capture the important information and actions taken during the call."
+    ),
+    "voice_id": "11labs-Cimo",
+    "voice_temperature": 1,
+    "voice_speed": 1.06,
+    "volume": 1.8,
+    "enable_backchannel": True,
+    "backchannel_frequency": 1,
+    "backchannel_words": ["okay", "uh-huh", "yah"],
+    "reminder_trigger_ms": 5000,
+    "reminder_max_count": 1,
+    "max_call_duration_ms": 360000,
+    "interruption_sensitivity": 0.9,
+    "ambient_sound": "call-center",
+    "responsiveness": 1,
+    "normalize_for_speech": False,
+    "begin_message_delay_ms": 200,
+    "voicemail_option": {"action": {"type": "hangup"}},
+    "stt_mode": "accurate",
+    "custom_stt_config": {"provider": "deepgram", "endpointing_ms": 1000},
+    "vocab_specialization": "medical",
+    "allow_user_dtmf": True,
+    "user_dtmf_options": {},
+    "denoising_mode": "noise-and-background-speech-cancellation",
+}

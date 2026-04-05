@@ -1,5 +1,4 @@
 import logging
-from datetime import timedelta
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
@@ -12,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 
 def trigger_retell_call(reminder):
-    """Place an outbound call via the Retell AI SDK."""
     from retell import Retell
 
     client = Retell(api_key=settings.RETELL_API_KEY)
@@ -20,10 +18,12 @@ def trigger_retell_call(reminder):
     response = client.call.create_phone_call(
         from_number=settings.RETELL_FROM_NUMBER,
         to_number=reminder.user.phone_number,
-        agent_id=settings.RETELL_AGENT_ID,
+        override_agent_id=settings.RETELL_AGENT_ID,
+        retell_llm_dynamic_variables={
+            "message": reminder.message,
+        },
         metadata={
             "reminder_id": str(reminder.id),
-            "message": reminder.message,
         },
     )
     return response.call_id
