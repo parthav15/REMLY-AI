@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "Remly AI",
+    "slug": "remly-ai",
+    "version": "1.0.0",
+    "scheme": "remly",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#4f46e5"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.remlyai.app",
+      "infoPlist": {
+        "NSContactsUsageDescription": "Remly needs access to your contacts to save the AI assistant number so calls aren't blocked as spam."
+      }
+    },
+    "android": {
+      "package": "com.remlyai.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#4f46e5",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": ["android.permission.READ_CONTACTS", "android.permission.WRITE_CONTACTS"]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-contacts",
+      "@react-native-community/datetimepicker"
+    ]
+  }
+}

@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Remly AI — Product & Architecture Document</title>
+<style>
+  :root {
+    --font: -apple-system, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    --font-display: -apple-system, 'SF Pro Display', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    --mono: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+    --bg: #ffffff;
+    --bg-secondary: #f5f5f7;
+    --bg-code: #f1f1f4;
+    --text: #1d1d1f;
+    --text-secondary: #6e6e73;
+    --text-tertiary: #86868b;
+    --border: #d2d2d7;
+    --border-light: #e8e8ed;
+    
+    /* Accent to Indigo/Purple for AI vibe */
+    --accent: #4f46e5;
+    --accent-bg: #e0e7ff;
+    --green: #059669;
+    --green-bg: #d1fae5;
+    --red: #dc2626;
+    --red-bg: #fee2e2;
+    --orange: #d97706;
+    --orange-bg: #fef3c7;
+    --purple: #7c3aed;
+    --purple-bg: #ede9fe;
+    --teal: #0d9488;
+    --teal-bg: #ccfbf1;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; font-size: 16px; }
+
+  body {
+    font-family: var(--font);
+    color: var(--text);
+    background: var(--bg);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection { background: var(--accent); color: white; }
+
+  /* ── LAYOUT ── */
+  .page {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 100vh;
+  }
+
+  @media (max-width: 900px) {
+    .page { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    border-right: 1px solid var(--border-light);
+    padding: 32px 0;
+    background: var(--bg-secondary);
+    font-size: 13px;
+  }
+  .sidebar::-webkit-scrollbar { width: 0; }
+  .sidebar-header { padding: 0 24px 24px; border-bottom: 1px solid var(--border-light); margin-bottom: 16px; }
+  .sidebar-header h1 { font-family: var(--font-display); font-size: 20px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 4px; }
+  .sidebar-header p { font-size: 12px; color: var(--text-tertiary); }
+  .sidebar-section { padding: 8px 24px 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-tertiary); }
+  .sidebar a { display: block; padding: 6px 24px; color: var(--text-secondary); text-decoration: none; font-weight: 500; border-left: 3px solid transparent; transition: all 0.15s; }
+  .sidebar a:hover { color: var(--text); background: rgba(0,0,0,0.03); }
+  .sidebar a.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-bg); font-weight: 600; }
+
+  /* ── MAIN CONTENT ── */
+  .content { max-width: 860px; padding: 48px 56px 120px; }
+  @media (max-width: 900px) { .content { padding: 32px 24px 80px; } }
+
+  /* ── COVER ── */
+  .cover { padding-bottom: 48px; margin-bottom: 48px; border-bottom: 1px solid var(--border-light); }
+  .cover h1 { font-family: var(--font-display); font-size: 44px; font-weight: 800; letter-spacing: -1.5px; line-height: 1.15; margin-bottom: 12px; color: var(--accent); }
+  .cover .subtitle { font-size: 18px; color: var(--text-secondary); margin-bottom: 28px; max-width: 560px; }
+  .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1px; background: var(--border-light); border: 1px solid var(--border-light); border-radius: 10px; overflow: hidden; }
+  .meta-item { background: var(--bg); padding: 14px 18px; }
+  .meta-item .label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary); margin-bottom: 2px; }
+  .meta-item .value { font-size: 14px; font-weight: 600; }
+
+  /* ── TYPOGRAPHY ── */
+  section { padding: 48px 0 0; }
+  section + section { border-top: 1px solid var(--border-light); margin-top: 48px; }
+  h2 { font-family: var(--font-display); font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 8px; line-height: 1.2; }
+  h3 { font-size: 20px; font-weight: 700; letter-spacing: -0.2px; margin: 36px 0 12px; line-height: 1.3; border-bottom: 1px solid var(--border-light); padding-bottom: 8px; }
+  h4 { font-size: 16px; font-weight: 600; margin: 24px 0 8px; line-height: 1.3; }
+  .section-desc { font-size: 15px; color: var(--text-secondary); margin-bottom: 32px; max-width: 620px; line-height: 1.6; }
+  p { margin-bottom: 12px; font-size: 15px; }
+  p + p { margin-top: 0; }
+
+  /* ── CALLOUT BOXES ── */
+  .callout { border-radius: 8px; padding: 16px 20px; margin: 20px 0; font-size: 14px; line-height: 1.55; }
+  .callout-blue { background: var(--accent-bg); border-left: 3px solid var(--accent); }
+  .callout-green { background: var(--green-bg); border-left: 3px solid var(--green); }
+  .callout-red { background: var(--red-bg); border-left: 3px solid var(--red); }
+  .callout-orange { background: var(--orange-bg); border-left: 3px solid var(--orange); }
+  .callout-teal { background: var(--teal-bg); border-left: 3px solid var(--teal); }
+  .callout strong { display: block; margin-bottom: 4px; font-size: 15px; }
+
+  /* ── TABLES ── */
+  table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; }
+  thead th { text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary); padding: 10px 16px; border-bottom: 2px solid var(--border); background: var(--bg-secondary); }
+  tbody td { padding: 10px 16px; border-bottom: 1px solid var(--border-light); vertical-align: top; }
+  tbody tr:hover { background: var(--bg-secondary); }
+
+  /* ── LISTS ── */
+  ul, ol { padding-left: 24px; margin: 8px 0 16px; font-size: 15px; }
+  li { margin-bottom: 6px; }
+
+  /* ── CODE ── */
+  code { font-family: var(--mono); font-size: 13px; background: var(--bg-code); padding: 2px 6px; border-radius: 4px; color: var(--text); }
+  pre { background: var(--bg-secondary); border: 1px solid var(--border-light); border-radius: 8px; padding: 20px 24px; overflow-x: auto; margin: 16px 0 24px; font-size: 13px; line-height: 1.6; }
+  pre code { background: none; padding: 0; }
+
+  /* ── TAGS ── */
+  .tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 100px; letter-spacing: 0.3px; }
+  .tag-p0 { background: var(--red-bg); color: var(--red); }
+  .tag-p1 { background: var(--orange-bg); color: var(--orange); }
+  .tag-p2 { background: var(--accent-bg); color: var(--accent); }
+  .tag-green { background: var(--green-bg); color: var(--green); }
+
+  /* ── DIAGRAM BOXES ── */
+  .diagram { background: #1e1e1e; border-radius: 10px; padding: 24px; margin: 20px 0 28px; overflow-x: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+  .diagram pre { background: none; border: none; padding: 0; margin: 0; font-size: 13px; line-height: 1.55; color: #d4d4d4; white-space: pre; font-family: var(--mono); }
+  
+  /* ── SCHEMA TABLE ── */
+  .schema-block { background: var(--bg-secondary); border: 1px solid var(--border-light); border-radius: 10px; overflow: hidden; margin: 16px 0 24px; }
+  .schema-block-header { padding: 12px 20px; font-weight: 700; font-size: 14px; background: var(--bg); border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; }
+  .schema-block table { margin: 0; }
+  .schema-block thead th { background: var(--bg-secondary); }
+
+  /* ── GRIDS ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  .col-card { background: var(--bg-secondary); border: 1px solid var(--border-light); border-radius: 10px; padding: 24px; transition: transform 0.2s; }
+  .col-card:hover { transform: translateY(-2px); border-color: var(--border); }
+  .col-card h4 { margin-top: 0; color: var(--accent); }
+  @media (max-width: 700px) { .two-col, .three-col { grid-template-columns: 1fr; } }
+
+  /* ── STAT BOX ── */
+  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 24px 0; }
+  .stat-box { background: var(--bg); border: 1px solid var(--border-light); border-radius: 8px; padding: 16px; text-align: center; }
+  .stat-box .num { font-size: 28px; font-weight: 800; color: var(--accent); font-family: var(--font-display); margin-bottom: 4px; }
+  .stat-box .label { font-size: 12px; color: var(--text-tertiary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
+
+  /* ── FLOW DIAGRAM ── */
+  .flow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 16px 0 24px; background: var(--bg-secondary); padding: 20px; border-radius: 8px; border: 1px solid var(--border-light); }
+  .flow-node { padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; border: 2px solid var(--border); background: var(--bg); box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+  .flow-arrow { color: var(--accent); font-weight: bold; font-size: 18px; }
+  .flow-node.active { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
+  .flow-node.db { border-color: var(--teal); background: var(--teal-bg); color: var(--teal); }
+  .flow-node.external { border-color: var(--orange); background: var(--orange-bg); color: var(--orange); border-style: dashed; }
+
+  /* ── FOOTER ── */
+  .doc-footer { margin-top: 80px; padding-top: 24px; border-top: 1px solid var(--border-light); font-size: 12px; color: var(--text-tertiary); }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <h1>Remly AI</h1>
+    <p>Architecture Doc MVP (Cron)</p>
+  </div>
+
+  <div class="sidebar-section">Product Concept</div>
+  <a href="#overview">1. The Core Wedge</a>
+  <a href="#problem">2. Problem & Personas</a>
+  <a href="#features">3. Feature Roadmap</a>
+
+  <div class="sidebar-section" style="margin-top: 16px;">System Architecture</div>
+  <a href="#arch-overview">4. High-Level Architecture</a>
+  <a href="#tech-stack">5. Technology Stack</a>
+  <a href="#queue">6. The Cron Scheduler</a>
+  <a href="#retell">7. Retell AI Integration</a>
+
+  <div class="sidebar-section" style="margin-top: 16px;">Data & API</div>
+  <a href="#database">8. Database Schema</a>
+  <a href="#api">9. API Contracts</a>
+
+  <div class="sidebar-section" style="margin-top: 16px;">Economics & Ops</div>
+  <a href="#economics">10. Unit Economics (Retell)</a>
+  <a href="#spam">11. The Truecaller Problem</a>
+  <a href="#execution">12. Execution Plan</a>
+</aside>
+
+<main class="content">
+
+<div class="cover">
+  <h1>Remly AI</h1>
+  <p class="subtitle">A conversational AI pattern-interrupt reminder system that physically calls your phone to bypass notification blindness.</p>
+
+  <div class="meta-grid">
+    <div class="meta-item">
+      <div class="label">Platform</div>
+      <div class="value">Mobile (Expo RN)</div>
+    </div>
+    <div class="meta-item">
+      <div class="label">Backend</div>
+      <div class="value">Django + DRF</div>
+    </div>
+    <div class="meta-item">
+      <div class="label">Voice Engine</div>
+      <div class="value" style="color: var(--teal);">Purely Retell AI</div>
+    </div>
+    <div class="meta-item">
+      <div class="label">Scheduler</div>
+      <div class="value">OS Cron + Django Command</div>
+    </div>
+  </div>
+</div>
+
+<section id="overview">
+  <h2>1. The Core Wedge</h2>
+  <p class="section-desc">Why push notifications are dead, and why a phone call works.</p>
+
+  <p>We are living in an era of <strong>notification blindness</strong>. The average smartphone user swipes away 50+ push notifications a day without even reading them.</p>
+  <p>A phone call creates <strong>unavoidable, high-stakes friction</strong>. It forces you to stop what you are doing and answer. By leveraging <strong>Retell AI</strong> natively, we skip the robotic "Press 1 to Snooze" era entirely. The user answers the phone and hears a natural human voice. If they are busy, they simply say, <em>"I'm driving, call me back in 15 minutes,"</em> and the AI reschedules it seamlessly.</p>
+</section>
+
+<section id="problem">
+  <h2>2. Problem & Personas</h2>
+
+  <div class="three-col">
+    <div class="col-card">
+      <h4>The Neurodivergent</h4>
+      <p><strong>Pain:</strong> Severe ADHD causes hyper-focus or time blindness. Standard calendars don't break the cycle.</p>
+      <p><strong>Use Case:</strong> "Call me at 3 PM and don't hang up until I confirm I have stopped playing video games and started my homework."</p>
+    </div>
+    <div class="col-card">
+      <h4>The High-Stakes Pro</h4>
+      <p><strong>Pain:</strong> Missing one specific deadline costs money. Cannot risk swiping away an alert.</p>
+      <p><strong>Use Case:</strong> "Call me at 9:55 AM to buy the pre-sale tickets." or "Call me to jump on the investor Zoom."</p>
+    </div>
+    <div class="col-card">
+      <h4>The Caregiver</h4>
+      <p><strong>Pain:</strong> Elderly parents forget to take medication but don't check SMS. They *always* answer the phone.</p>
+      <p><strong>Use Case:</strong> Adult child schedules a daily 8 AM AI call to their mother: "Hi Mom, time to take your blood pressure pill."</p>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <h2>3. Feature Roadmap</h2>
+
+  <table>
+    <thead><tr><th>Feature</th><th>Phase</th><th>Priority</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Set time/date for reminder</td><td>V1</td><td><span class="tag tag-p0">P0</span></td><td>Core capability. Handled in Expo Mobile App.</td></tr>
+      <tr><td>Two-Way Conversational Call</td><td>V1</td><td><span class="tag tag-p0">P0</span></td><td>Using Retell AI Outbound API. Natural voice out-of-the-box.</td></tr>
+      <tr><td>Conversational Snooze</td><td>V1</td><td><span class="tag tag-p0">P0</span></td><td>Retell hits Django webhook, which simply updates the DB timestamp for the next Cron sweep.</td></tr>
+      <tr><td>Credit System / Billing</td><td>V1</td><td><span class="tag tag-p0">P0</span></td><td>Retell costs ~$0.11/min. Strict credit tracking is mandatory.</td></tr>
+      <tr><td>vCard Contact Download</td><td>V1</td><td><span class="tag tag-p1">P1</span></td><td>Forces user to save the number to bypass spam filters via <code>expo-contacts</code>.</td></tr>
+      <tr><td>Admin Dashboard (Web)</td><td>V1</td><td><span class="tag tag-p1">P1</span></td><td>Use Django's built-in Admin panel for instant operations out of the box.</td></tr>
+      <tr><td>Recurring Reminders (Daily)</td><td>V1</td><td><span class="tag tag-p1">P1</span></td><td>The cron script can handle resetting the timestamp to +24 hours after completion.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="arch-overview">
+  <h2>4. High-Level Architecture (Lean MVP)</h2>
+  <p class="section-desc">Optimized for simplicity and speed of deployment. We avoid external message brokers entirely. The source of truth is the PostgreSQL database, which is polled every minute by a scheduled cron job.</p>
+
+  <div class="diagram"><pre>
+┌──────────────────┐       ┌────────────────────────┐      ┌─────────────────┐
+│  Expo App (iOS)  │       │  Django + DRF          │      │   PostgreSQL    │
+│  React Native    │──API─▶│  (Web Server)          │──W/R▶│  (Primary DB)   │
+│  Schedule Form   │       │                        │      │                 │
+└──────────────────┘       └───────────┬────────────┘      └────────┬────────┘
+                                       │                            │
+                                   Webhooks                     DB Queries
+                                       │                            │
+                                       ▼                            ▼
+┌──────────────────┐       ┌────────────────────────┐      ┌─────────────────┐
+│   User's Phone   │◀─SIP──│        Retell AI       │◀─API─│  Linux Cron Job │
+│  (Rings!)        │       │  (Agent + TTS + STT)   │      │  (* * * * *)    │
+└──────────┬───────┘       └───────────┬────────────┘      └─────────────────┘
+           │                           │ Tool Call: "Snooze"
+           │                           ▼
+           │               ┌────────────────────────┐
+           └──────(Talk)──▶│  Django + DRF          │
+                           │  (/api/webhooks/retell)│
+                           └────────────────────────┘</pre></div>
+</section>
+
+<section id="tech-stack">
+  <h2>5. Technology Stack</h2>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h4>Client: Expo + React Native</h4>
+      <ul>
+        <li><strong>Why:</strong> Build once, deploy to iOS and Android. Integrates easily with native contacts (for vCard download) and Apple/Google Pay.</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h4>Backend: Django + DRF</h4>
+      <ul>
+        <li><strong>Why:</strong> Django provides a persistent, rock-solid API. The built-in Django Admin instantly solves your V1 admin panel needs. No cold starts.</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h4>Database: PostgreSQL</h4>
+      <ul>
+        <li><strong>Why:</strong> Row-level locking (<code>select_for_update</code>) is mandatory when using Cron to ensure the script doesn't double-call users. Postgres handles this perfectly.</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h4 style="color: var(--teal);">Scheduler: OS Cron</h4>
+      <ul>
+        <li><strong>Why:</strong> Simplest possible architecture. No Redis needed. A simple script runs every 60 seconds, finds all due reminders, and pushes them to Retell.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="queue">
+  <h2>6. The Cron Scheduler Logic</h2>
+  <p class="section-desc">How a reminder gets triggered exactly on time without Celery.</p>
+
+  <div class="flow">
+    <span class="flow-node active">User Saves Reminder</span>
+    <span class="flow-arrow">&rarr;</span>
+    <span class="flow-node db">DB: Insert Status=Pending</span>
+    <span class="flow-arrow">&rarr;</span>
+    <span class="flow-node external">Cron runs every 1 minute</span>
+    <span class="flow-arrow">&rarr;</span>
+    <span class="flow-node db">DB: Select where time &lt;= now()</span>
+    <span class="flow-arrow">&rarr;</span>
+    <span class="flow-node external">Django: Retell.createCall()</span>
+  </div>
+
+  <div class="callout callout-orange">
+    <strong>CRITICAL CRON GOTCHA: Avoiding Double Calls</strong><br>
+    Your Django management command MUST lock the database rows while processing, otherwise two overlapping cron jobs might call the same user twice.
+  </div>
+
+  <div class="diagram"><pre>
+# management/commands/run_reminders.py
+
+from django.core.management.base import BaseCommand
+from django.utils import timezone
+from django.db import transaction
+from myapp.models import Reminder
+
+class Command(BaseCommand):
+    def handle(self, *args, **kwargs):
+        now = timezone.now()
+        
+        with transaction.atomic():
+            # select_for_update() locks these rows until the transaction finishes
+            due_reminders = Reminder.objects.select_for_update().filter(
+                status='pending',
+                scheduled_at__lte=now
+            )
+            
+            for reminder in due_reminders:
+                # 1. Trigger Retell API
+                trigger_retell_call(reminder)
+                
+                # 2. Update status so next cron ignores it
+                reminder.status = 'triggered'
+                reminder.save()
+  </pre></div>
+</section>
+
+<section id="retell">
+  <h2>7. Retell AI Integration & Conversational Snooze</h2>
+  
+  <p>Because we are using Cron, the snooze logic is brilliantly simple. We don't need to mess with queues. We just push the database timestamp into the future, and the Cron script will naturally pick it up again when the time comes.</p>
+
+  <h3>How Conversational Snooze Works</h3>
+  <ol>
+    <li>User says: <em>"Hey, I'm stuck in traffic, call me back in 20 minutes."</em></li>
+    <li>Retell's LLM detects this intent and triggers the Custom Tool named `snooze_reminder` with the argument `{"minutes": 20}`.</li>
+    <li>Retell fires an HTTP POST to your Django URL `/api/v1/webhooks/retell/tool/`.</li>
+    <li>Django finds the reminder in the DB and updates it: <br><code>reminder.scheduled_at = now() + timedelta(minutes=20)</code><br><code>reminder.status = 'pending'</code>.</li>
+    <li>Django responds to Retell with `{"status": "success"}`.</li>
+    <li>Retell's voice says: <em>"Got it, I'll call you back in 20 minutes. Drive safe!"</em> and hangs up.</li>
+    <li>20 minutes later, the Cron job sweeps the DB, finds the reminder is due again, and calls them.</li>
+  </ol>
+
+</section>
+
+<section id="database">
+  <h2>8. Database Schema (Django Models)</h2>
+
+  <div class="schema-block">
+    <div class="schema-block-header"><span>users_customuser</span></div>
+    <table>
+      <thead><tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>UUID</td><td>PK</td><td></td></tr>
+        <tr><td><code>phone_number</code></td><td>VARCHAR(15)</td><td>UNIQUE</td><td>E.164 format (+1234567890)</td></tr>
+        <tr><td><code>timezone</code></td><td>VARCHAR(50)</td><td>NOT NULL</td><td>Crucial for scheduling (e.g. 'Asia/Kolkata')</td></tr>
+        <tr><td><code>credits</code></td><td>INTEGER</td><td>DEFAULT 50</td><td>Call credits remaining</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="schema-block">
+    <div class="schema-block-header"><span>reminders_reminder</span></div>
+    <table>
+      <thead><tr><th>Column</th><th>Type</th><th>Constraints</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>UUID</td><td>PK</td><td></td></tr>
+        <tr><td><code>user_id</code></td><td>UUID</td><td>FK</td><td></td></tr>
+        <tr><td><code>message</code></td><td>TEXT</td><td>NOT NULL</td><td>What the AI will read out loud</td></tr>
+        <tr><td><code>scheduled_at</code></td><td>TIMESTAMPTZ</td><td>NOT NULL</td><td>Exact UTC time to call</td></tr>
+        <tr><td><code>status</code></td><td>VARCHAR(20)</td><td>DEFAULT 'pending'</td><td>pending, triggered, answered, missed</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="api">
+  <h2>9. API Contracts (Django REST Framework)</h2>
+  
+  <pre><code>// 1. Create Reminder (Called by Expo App)
+POST /api/v1/reminders/
+Body: { "message": "Take meds", "scheduled_at": "2026-03-27T14:30:00Z" }
+Returns: { "id": "uuid", "status": "pending" }
+*Deducts 1 credit from user*
+
+// 2. Webhook: Retell Tool Call (Snooze Logic)
+POST /api/v1/webhooks/retell/tool/
+Body: { "tool_name": "snooze_reminder", "args": { "minutes": 15 }, "call_id": "..." }
+Logic: Django updates reminder.scheduled_at = now + 15 mins.
+Returns: { "result": "Successfully rescheduled." } 
+
+// 3. Webhook: Call Status (From Retell)
+POST /api/v1/webhooks/retell/status/
+Body: { "call_id": "...", "status": "completed", "duration_ms": 12000 }
+Logic: Updates DB reminder status and logs duration for analytics.
+</code></pre>
+</section>
+
+<section id="economics">
+  <h2>10. Unit Economics (Crucial)</h2>
+  <p class="section-desc">Retell AI is incredibly powerful, providing near-human latency and conversational logic. However, <strong>it is significantly more expensive than standard robo-calling.</strong> You must price your app accordingly.</p>
+
+  <div class="stat-grid">
+    <div class="stat-box">
+      <div class="num">$0.11</div>
+      <div class="label">Retell AI (per minute)</div>
+    </div>
+    <div class="stat-box">
+      <div class="num">$5.00</div>
+      <div class="label">Django VPS (Monthly)</div>
+    </div>
+    <div class="stat-box">
+      <div class="num">~$0.11</div>
+      <div class="label">Total Hard Cost / Call</div>
+    </div>
+  </div>
+
+  <h3>Pricing Model Strategy</h3>
+  <p>Assuming an average reminder call lasts ~30 seconds, model for $0.11 per call for safety. If a user sets 50 reminders a month, your hard cost is <strong>~$5.50/month</strong>.</p>
+  
+  <table>
+    <thead><tr><th>Plan</th><th>Price</th><th>Includes</th><th>Your Gross Margin</th></tr></thead>
+    <tbody>
+      <tr><td>Starter</td><td>$9.99 / mo (₹799)</td><td>50 Call Credits</td><td>~45% ($4.49 profit)</td></tr>
+      <tr><td>Pro</td><td>$19.99 / mo (₹1,599)</td><td>125 Call Credits</td><td>~31% ($6.24 profit)</td></tr>
+      <tr><td>Pay-As-You-Go</td><td>$10.00 Top-up</td><td>50 Call Credits</td><td>~45% margin</td></tr>
+    </tbody>
+  </table>
+  <div class="callout callout-red">
+    <strong>Strict Timeout Rule:</strong><br>
+    Because Retell charges per minute, you must configure the Retell Agent to politely hang up after the reminder is acknowledged, or set a hard API timeout limit (e.g., max 2 minutes per call) so users don't use your bot as a general chat therapist and drain your wallet.
+  </div>
+</section>
+
+<section id="spam">
+  <h2>11. The Truecaller / Spam Problem</h2>
+  <p class="section-desc">If you buy a phone number in Retell and call someone 4 times a day, telecom carriers will mark your number as "Spam Likely" within a week.</p>
+
+  <h4>The Fix (Expo App Onboarding Flow)</h4>
+  <ol>
+    <li>Buy a single, dedicated phone number inside the Retell dashboard.</li>
+    <li>During Expo App onboarding, prompt the user to "Save Assistant to Contacts".</li>
+    <li>Use the <code>expo-contacts</code> package to programmatically save your Retell number as <strong>"Remly AI Assistant"</strong> on their device.</li>
+    <li><strong>Why this works:</strong> iOS and Android explicitly bypass "Silence Unknown Callers" and carrier spam filters if the number exists in the user's local contact book.</li>
+  </ol>
+</section>
+
+<section id="execution">
+  <h2>12. Execution Plan</h2>
+
+  <table>
+    <thead><tr><th>Week</th><th>Focus</th><th>Deliverables</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>1</strong></td>
+        <td>Infrastructure & Expo Setup</td>
+        <td>Deploy Django to a simple VPS (DigitalOcean/Render). Configure PostgreSQL. Initialize Expo React Native app with basic Auth (DRF Token). Build the basic Django Admin panel.</td>
+      </tr>
+      <tr>
+        <td><strong>2</strong></td>
+        <td>The Cron Engine</td>
+        <td>Write the <code>run_reminders</code> management command. Set up the server crontab. Build the mobile form to insert a reminder. Verify the cron sweeps the DB and triggers print statements correctly.</td>
+      </tr>
+      <tr>
+        <td><strong>3</strong></td>
+        <td>Retell AI Integration</td>
+        <td>Configure the Retell Agent prompt. Connect the cron command to Retell Outbound API. Build the DRF webhook endpoint to handle conversational snoozing and status updates.</td>
+      </tr>
+      <tr>
+        <td><strong>4</strong></td>
+        <td>Billing & Polish</td>
+        <td>Add Stripe/Apple Pay to Expo for buying credits. Finalize <code>expo-contacts</code> integration to prevent spam blocking. Launch Phase 1.</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<div class="doc-footer">
+  <p>Remly AI — Architecture Document MVP (Cron)</p>
+  <p>Last updated: 27 March 2026</p>
+</div>
+
+</main>
+</div>
+
+<script>
+  const links = document.querySelectorAll('.sidebar a');
+  const sections = document.querySelectorAll('section[id]');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        const a = document.querySelector(`.sidebar a[href="#${entry.target.id}"]`);
+        if (a) a.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>

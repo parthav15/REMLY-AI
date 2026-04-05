@@ -1,0 +1,5 @@
+# Remly AI — Run the reminder scheduler every minute
+# Install with: crontab crontab.example (from the backend/ directory)
+# Or add this line to your existing crontab via: crontab -e
+
+* * * * * cd /path/to/backend && /path/to/backend/venv/bin/python manage.py run_reminders >> /var/log/remly_cron.log 2>&1
