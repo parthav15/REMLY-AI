@@ -18,7 +18,7 @@ function getFormattedDate(): string {
 
 export default function GreetingHeader() {
   return (
-    <Animated.View entering={FadeIn} className="px-5 pt-4 pb-2">
+    <Animated.View entering={FadeIn}>
       <Text className="text-xl font-bold text-gray-800">{getGreeting()}</Text>
       <Text className="text-sm text-gray-400">{getFormattedDate()}</Text>
     </Animated.View>

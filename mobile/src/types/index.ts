@@ -17,6 +17,17 @@ export interface User {
   timezone: string;
   credits: number;
   country: Country | null;
+  date_joined: string;
+}
+
+export interface PaymentRecord {
+  id: string;
+  plan_id: string;
+  credits: number;
+  amount_paise: number;
+  status: string;
+  razorpay_order_id: string;
+  created_at: string;
 }
 
 export interface Reminder {

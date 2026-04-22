@@ -84,5 +84,5 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ["id", "phone_number", "timezone", "credits", "country"]
-        read_only_fields = ["id", "credits", "country"]
+        fields = ["id", "phone_number", "timezone", "credits", "country", "date_joined"]
+        read_only_fields = ["id", "credits", "country", "date_joined"]

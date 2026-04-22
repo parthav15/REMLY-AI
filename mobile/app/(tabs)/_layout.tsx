@@ -1,15 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { Tabs } from "expo-router";
 import React from "react";
 import { Platform, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import NotificationBell from "../../src/components/NotificationBell";
 import { COLORS, TAB_BAR } from "../../src/constants";
-import { useNotificationCount } from "../../src/context/NotificationCountContext";
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
-  const { count: notifCount } = useNotificationCount();
 
   return (
     <Tabs
@@ -48,15 +46,20 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Reminders",
+          headerShown: false,
           tabBarLabel: "Home",
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? "home" : "home-outline"} size={22} color={color} />
           ),
-          headerRight: () => (
-            <View style={{ marginRight: 16 }}>
-              <NotificationBell count={notifCount} />
-            </View>
+        }}
+      />
+      <Tabs.Screen
+        name="search"
+        options={{
+          title: "Search",
+          tabBarLabel: "Search",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? "search" : "search-outline"} size={22} color={color} />
           ),
         }}
       />
@@ -64,20 +67,62 @@ export default function TabsLayout() {
         name="create"
         options={{
           title: "New Reminder",
-          tabBarLabel: "Create",
+          tabBarLabel: () => null,
+          tabBarIcon: () => (
+            <View
+              style={{
+                marginTop: -36,
+                shadowColor: "#10b981",
+                shadowOffset: { width: 0, height: 10 },
+                shadowOpacity: 0.45,
+                shadowRadius: 16,
+                elevation: 14,
+              }}
+            >
+              <LinearGradient
+                colors={["#10b981", "#059669"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{
+                  width: 72,
+                  height: 72,
+                  borderRadius: 36,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: 4,
+                  borderColor: COLORS.white,
+                }}
+              >
+                <Ionicons name="add" size={40} color={COLORS.white} />
+              </LinearGradient>
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Profile",
+          tabBarLabel: "Profile",
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "add-circle" : "add-circle-outline"} size={24} color={color} />
+            <Ionicons name={focused ? "person" : "person-outline"} size={22} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="plan"
+        options={{
+          title: "Plan",
+          tabBarLabel: "Plan",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? "card" : "card-outline"} size={22} color={color} />
           ),
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
-          title: "Settings",
-          tabBarLabel: "Settings",
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "settings" : "settings-outline"} size={22} color={color} />
-          ),
+          href: null,
         }}
       />
     </Tabs>

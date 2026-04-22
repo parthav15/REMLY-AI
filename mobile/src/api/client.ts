@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { CONFIG, STORAGE_KEYS } from "../constants";
-import type { AuthResponse, Country, CreditPlan, RazorpayOrder, Reminder, User, VerifyPaymentResponse } from "../types";
+import type { AuthResponse, Country, CreditPlan, PaymentRecord, RazorpayOrder, Reminder, User, VerifyPaymentResponse } from "../types";
 
 const API_BASE = __DEV__ ? CONFIG.API_BASE_DEV : CONFIG.API_BASE_PROD;
 
@@ -101,4 +101,8 @@ export async function verifyPayment(
     method: "POST",
     body: JSON.stringify({ razorpay_order_id, razorpay_payment_id, razorpay_signature }),
   });
+}
+
+export async function getPaymentHistory(): Promise<PaymentRecord[]> {
+  return request("/payments/history/");
 }
